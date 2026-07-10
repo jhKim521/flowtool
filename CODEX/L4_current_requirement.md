@@ -4,96 +4,97 @@
 
 ## 현재 목표
 
-Express.js + TypeScript 기반의 FlowTool Backend MVP 프로젝트를 초기 구성하고,
-HTTP Capture Middleware를 구현할 수 있는 기반을 마련한다.
+기존에 구현된 HTTP Capture 기능을 활용하여,
+저장된 Capture Log를 조회할 수 있는 API를 구현한다.
 
-현재 프로젝트는 Backend, Frontend 등을 하나의 Repository에서 관리하는 Monorepo 형태를 지향한다.
+이번 작업은 Capture 기능을 확장하는 것이 아니라,
+이미 저장된 데이터를 조회하는 기능만 추가한다.
 
-따라서 이번 작업에서는 Express.js Backend 프로젝트를 반드시 `backend/` 폴더 하위에 구성한다.
+## Sprint Goal
+
+이번 스프린트에서는 "저장된 Capture Log를 조회할 수 있는 최소 기능"만 완성한다.
+
+새로운 기능이나 구조 개선은 하지 않는다.
 
 ---
 
 ## 이번 작업 범위
 
-이번 작업에서 구현한다.
+이번 작업에서는 아래 기능만 구현한다.
 
-- `backend/` 폴더 생성
-- `backend/` 하위에 Express.js + TypeScript 프로젝트 초기 생성
-- Backend 기본 디렉터리 구조 생성
-- PostgreSQL 연결 설정
-- CaptureLog 모델 정의
-- Capture Middleware 구현
-- 테스트용 API 작성
-- 검증 스크립트 작성
+- Capture Log 조회 API
+- Capture Log 단건 조회 API
+- Repository 조회 기능
+- Service 조회 기능
+- Controller 구현
+- API 검증
 
-이번 작업에서는 Frontend 및 AI 기능은 구현하지 않는다.
+이번 작업에서는 수정, 삭제, 검색, 필터링은 구현하지 않는다.
 
 ---
 
-## Capture Middleware 수집 대상
 
+
+## 구현 API
+
+### Capture Log 목록 조회
+
+GET /capture-logs
+
+최신순(createdAt DESC)으로 조회한다.
+
+---
+
+### Capture Log 단건 조회
+
+GET /capture-logs/:id
+
+존재하지 않을 경우 적절한 오류를 반환한다.
+
+---
+
+## 응답 항목
+
+조회 시 아래 정보를 반환한다.
+
+- id
 - method
 - path
+- responseStatus
+- durationMs
+- createdAt
+
+단건 조회에서는 추가로 아래도 반환한다.
+
 - query
 - requestHeaders
 - requestBody
-- responseStatus
 - responseBody
-- durationMs
 - errorMessage
-- createdAt
-
----
-
-## 권장 Backend 구조
-
-아래 구조를 기준으로 구성한다.
-
-```txt
-backend/
-├── package.json
-├── tsconfig.json
-├── .env.example
-├── src/
-│   ├── app.ts
-│   ├── server.ts
-│   ├── config/
-│   ├── middleware/
-│   ├── routes/
-│   ├── controllers/
-│   ├── services/
-│   ├── repositories/
-│   ├── models/
-│   ├── utils/
-│   └── types/
-└── scripts/
-```
-필요하지 않은 폴더는 생성하지 않아도 된다.
 
 ---
 
 ## 완료 기준
 
-아래 조건을 모두 만족하면 이번 작업은 완료로 판단한다.
+아래 조건을 만족하면 완료로 판단한다.
 
-- backend/ 하위에 Express.js + TypeScript 프로젝트가 생성된다.
-- 프로젝트가 정상 실행된다.
-- Express 서버가 정상 실행된다.
-- PostgreSQL 연결이 성공한다.
-- HTTP 요청이 Capture Middleware를 통과한다.
-- Capture Log가 PostgreSQL에 저장된다.
-- PostgreSQL MCP로 저장 결과를 확인할 수 있다.
-- 검증 스크립트가 정상 동작한다.
+- 목록 조회 API 동작
+- 단건 조회 API 동작
+- 최신순 조회
+- 존재하지 않는 id 예외 처리
+- Postman 검증 완료
+
 ---
 
 ## 검증 방법
 
 작업 완료 후 반드시 수행한다.
 
-- Backend 서버 실행 확인
-- 테스트 요청 실행
-- 검증 스크립트 실행
-- PostgreSQL MCP를 이용한 Capture Log 저장 확인
+- 테스트 요청 여러 건 생성
+- GET /capture-logs 호출
+- GET /capture-logs/{id} 호출
+- PostgreSQL 저장 데이터와 API 응답 비교
+
 ---
 
 ## 작업 완료 후
@@ -107,19 +108,19 @@ backend/
 ---
 
 ## 이번 작업에서 제외
-- Frontend
-- 인증 및 권한
+
+- Dashboard
+- 검색
+- 필터
+- 삭제
+- 수정
 - AI 기능
-- Trace 비교
-- OpenTelemetry
-- Docker 배포
-- Kubernetes 지원
+- Spring Starter
+- Node SDK
 
 ---
 
 ## 참고 문서
-
-작업 시작 전 반드시 확인한다.
 
 - AGENT.md
 - L1_coding_rules.md
@@ -127,9 +128,7 @@ backend/
 - L2_architecture.md
 - L2_entity_model.md
 - L2_api_spec.md
-- L2_ai_workflow.md
-- L2_mcp_workflow.md
 - L3_test_strategy.md
 - L4_progress.md
 
-현재는 Backend 프로젝트 초기 구성 및 HTTP Capture 기반 마련에만 집중한다.
+이번 작업에서는 Capture Log 조회 기능만 구현한다.

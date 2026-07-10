@@ -71,3 +71,25 @@ export async function findLatestCaptureLog(): Promise<CaptureLog | null> {
 
   return toCaptureLog(result.rows[0]);
 }
+
+export async function findCaptureLogs(): Promise<CaptureLog[]> {
+  const result = await pool.query(
+    "SELECT * FROM capture_logs ORDER BY created_at DESC, id DESC",
+  );
+
+  return result.rows.map(toCaptureLog);
+}
+
+export async function findCaptureLogById(
+  id: number,
+): Promise<CaptureLog | null> {
+  const result = await pool.query("SELECT * FROM capture_logs WHERE id = $1", [
+    id,
+  ]);
+
+  if (!result.rows[0]) {
+    return null;
+  }
+
+  return toCaptureLog(result.rows[0]);
+}
