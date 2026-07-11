@@ -17,6 +17,7 @@ node_modules/
 dist/
 build/
 coverage/
+*.tsbuildinfo
 
 # =========================
 # Logs
@@ -28,7 +29,7 @@ coverage/
 # =========================
 journal/
 docs/skills/
-!docs/skills/startTask.md
+docs/history/
 
 # =========================
 # VS Code
