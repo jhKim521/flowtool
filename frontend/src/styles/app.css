@@ -17,6 +17,10 @@ table {
   font: inherit;
 }
 
+a {
+  color: #2563eb;
+}
+
 .page-shell {
   width: min(1120px, calc(100% - 40px));
   margin: 0 auto;
@@ -25,6 +29,11 @@ table {
 
 .page-header {
   margin-bottom: 20px;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 10px;
 }
 
 .page-header h1 {
@@ -92,4 +101,63 @@ tr:last-child td {
   max-width: 420px;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.detail-link {
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.detail-link:hover,
+.back-link:hover {
+  text-decoration: underline;
+}
+
+.detail-sections {
+  display: grid;
+  gap: 16px;
+}
+
+.detail-section {
+  border: 1px solid #d8dee8;
+  background: #ffffff;
+  padding: 16px;
+}
+
+.detail-section h2 {
+  margin: 0 0 12px;
+  font-size: 18px;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.detail-grid div {
+  min-width: 0;
+}
+
+.detail-grid dt {
+  color: #52606d;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.detail-grid dd {
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+}
+
+pre {
+  max-height: 320px;
+  margin: 0;
+  overflow: auto;
+  padding: 12px;
+  background: #111827;
+  color: #f9fafb;
+  font-size: 13px;
+  line-height: 1.5;
 }

@@ -14,11 +14,11 @@
 
 현재 단계
 
-> **STEP 6 완료 / STEP 7 진행 예정**
+> **STEP 7 완료 / STEP 8 진행 예정**
 
 현재 목표
 
-> **Capture Log 상세 화면 구현 준비**
+> **FlowTool 내부 관리 API Capture 제외 준비**
 
 ---
 
@@ -175,13 +175,34 @@ Capture 한 건의 상세 정보를 확인할 수 있다.
 
 ### 완료 상태
 
-🟡 진행 예정
+✅ 완료
 
 ### 완료 조건
 
-- Request 정보 표시
-- Response 정보 표시
-- Duration 표시
+- 목록에서 상세 화면 이동 완료
+- `GET /capture-logs/:id` API 연동 완료
+- Method 표시 완료
+- Path 표시 완료
+- Query 표시 완료
+- Request Headers 표시 완료
+- Request Body 표시 완료
+- Response Body 표시 완료
+- Response Status 표시 완료
+- Duration 표시 완료
+- Error Message 표시 완료
+- Created At 표시 완료
+- 로딩 상태 처리 완료
+- 404 상태 처리 완료
+- API 실패 상태 처리 완료
+- Playwright MCP 브라우저 검증 완료
+
+### 완료 내용
+
+- React Router 기반 `/capture/:id` 라우팅 추가
+- Capture Log 상세 API 함수 추가
+- 목록 화면 상세 이동 링크 추가
+- 상세 화면 기본 정보 및 JSON 데이터 표시 구현
+- 새로고침 후 동일 상세 데이터 재조회 확인
 
 ---
 
@@ -219,9 +240,9 @@ Capture Log를 AI가 요약하고 분석할 수 있도록 한다.
 
 # 현재 우선순위
 
-현재는 STEP 7만 진행한다.
+현재는 STEP 8만 진행한다.
 
-STEP 7이 완료되기 전까지는
+STEP 8이 완료되기 전까지는
 다른 기능을 구현하지 않는다.
 
 ---
