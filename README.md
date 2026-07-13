@@ -76,9 +76,10 @@ AI는 단순히 코드를 생성하는 것이 아니라,
 
 - PostgreSQL
 
-## Frontend (예정)
+## Frontend
 
 - React
+- Vite
 - TypeScript
 
 ## AI & Development Tools
@@ -97,6 +98,7 @@ AI는 단순히 코드를 생성하는 것이 아니라,
 FlowTool
 
 ├── backend/        Express Backend
+├── frontend/       React Frontend
 ├── CODEX/          AI 개발 문서
 ├── docs/           프로젝트 문서
 └── README.md
@@ -119,6 +121,7 @@ FlowTool는 문서 기반 개발(Document Driven Development)을 지향합니다
 - ai_workflow.md
 - mcp_workflow.md
 - test_strategy.md
+- systemTask/
 
 AI는 위 문서를 참고하여 구현을 진행합니다.
 
@@ -134,11 +137,20 @@ AI는 위 문서를 참고하여 구현을 진행합니다.
 - Capture Log 저장
 - 테스트 API
 - Capture 자동 검증 스크립트
+- Capture Log 목록 조회 API
+- Capture Log 단건 상세 조회 API
+- 존재하지 않는 Capture Log 조회 시 404 처리
+- React + Vite Frontend 초기 구성
+- Capture Log 목록 화면
+- Capture Log 상세 화면
+- 로딩 / 빈 목록 / 오류 상태 처리
+- System Test 전략 및 기본 Capture 시나리오 문서화
+- Notion 기반 Development History / System Test History 기록 흐름
 
 진행 예정
 
-- Capture Log 조회 API
-- Dashboard UI
+- FlowTool 내부 관리 API Capture 제외
+- Dashboard UI 개선
 - Spring Starter
 - Node SDK
 - Trace 기반 요청 흐름 시각화
@@ -153,10 +165,26 @@ npm install
 npm run dev
 ```
 
-HTTP Capture 검증
+Frontend 실행
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Backend 검증
 
 ```bash
 npm run verify:capture
+npm run verify:capture-logs
+```
+
+Frontend 검증
+
+```bash
+cd frontend
+npm run build
 ```
 
 ---
@@ -167,4 +195,5 @@ npm run verify:capture
 - 문서 기반 개발
 - MCP를 활용한 자동 검증
 - 개발 히스토리 관리
+- Feature Verification과 System Test 분리
 - MVP 중심의 점진적 개발
