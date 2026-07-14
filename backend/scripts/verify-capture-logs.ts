@@ -6,6 +6,7 @@ import {
 import {
   getCaptureLogById,
   initializeCaptureStorage,
+  saveCaptureLog,
 } from "../src/services/capture-log.service";
 
 interface ApiResponse<T> {
@@ -60,18 +61,29 @@ async function main(): Promise<void> {
   const baseUrl = `http://127.0.0.1:${address.port}`;
 
   for (const message of ["capture list one", "capture list two"]) {
-    const response = await fetch(`${baseUrl}/api/test/echo`, {
+    await saveCaptureLog({
       method: "POST",
-      headers: {
+      path: "/verify/capture-logs",
+      query: {},
+      requestHeaders: {
         "content-type": "application/json",
       },
-      body: JSON.stringify({ message }),
+      requestBody: {
+        message,
+      },
+      responseHeaders: {
+        "content-type": "application/json",
+      },
+      responseBody: {
+        received: {
+          message,
+        },
+      },
+      statusCode: 201,
+      durationMs: 10,
+      errorMessage: null,
     });
-
-    assert(response.status === 201, `Expected 201, received ${response.status}.`);
   }
-
-  await new Promise((resolve) => setTimeout(resolve, 200));
 
   const listResponse = await fetch(`${baseUrl}/capture-logs`);
   const listBody = await readJson<ApiResponse<CaptureLogListItem[]>>(

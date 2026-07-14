@@ -13,13 +13,26 @@ export interface CaptureLog {
   createdAt: Date;
 }
 
+export interface CreateCaptureInput {
+  method: string;
+  path: string;
+  query?: unknown;
+  requestHeaders?: unknown;
+  requestBody?: unknown;
+  responseHeaders?: unknown;
+  responseBody?: unknown;
+  statusCode: number;
+  durationMs: number;
+  errorMessage?: string | null;
+}
+
 export interface CreateCaptureLogInput {
   method: string;
   path: string;
-  query: Record<string, unknown>;
-  requestHeaders: Record<string, unknown>;
+  query: unknown;
+  requestHeaders: unknown;
   requestBody: unknown;
-  responseHeaders: Record<string, unknown>;
+  responseHeaders: unknown;
   responseBody: unknown;
   statusCode: number;
   durationMs: number;

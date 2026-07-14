@@ -93,3 +93,8 @@ export async function findCaptureLogById(
 
   return toCaptureLog(result.rows[0]);
 }
+
+export async function countCaptureLogs(): Promise<number> {
+  const result = await pool.query("SELECT COUNT(*) AS count FROM capture_logs");
+  return Number(result.rows[0].count);
+}

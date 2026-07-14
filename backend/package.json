@@ -8,7 +8,8 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "verify:capture": "tsx scripts/verify-capture.ts",
-    "verify:capture-logs": "tsx scripts/verify-capture-logs.ts"
+    "verify:capture-logs": "tsx scripts/verify-capture-logs.ts",
+    "verify:no-auto-capture": "tsx scripts/verify-no-auto-capture.ts"
   },
   "dependencies": {
     "dotenv": "^16.4.7",
