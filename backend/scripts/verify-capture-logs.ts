@@ -3,8 +3,9 @@ import {
   closeDatabaseConnection,
   verifyDatabaseConnection,
 } from "../src/config/database";
+import { getCaptureLogById } from "../src/services/capture-query.service";
 import {
-  getCaptureLogById,
+  getCaptureLogCount,
   initializeCaptureStorage,
   saveCaptureLog,
 } from "../src/services/capture-log.service";
@@ -40,7 +41,7 @@ async function readJson<T>(response: Response): Promise<T> {
   return JSON.parse(text) as T;
 }
 
-function assert(condition: boolean, message: string): void {
+function assert(condition: unknown, message: string): asserts condition {
   if (!condition) {
     throw new Error(message);
   }
@@ -60,10 +61,12 @@ async function main(): Promise<void> {
 
   const baseUrl = `http://127.0.0.1:${address.port}`;
 
+  const createdCaptures = [];
+
   for (const message of ["capture list one", "capture list two"]) {
-    await saveCaptureLog({
+    const createdCapture = await saveCaptureLog({
       method: "POST",
-      path: "/verify/capture-logs",
+      path: "/verify/api/captures",
       query: {},
       requestHeaders: {
         "content-type": "application/json",
@@ -83,9 +86,16 @@ async function main(): Promise<void> {
       durationMs: 10,
       errorMessage: null,
     });
+
+    createdCaptures.push(createdCapture);
   }
 
-  const listResponse = await fetch(`${baseUrl}/capture-logs`);
+  const olderCapture = createdCaptures[0];
+  const latestCapture = createdCaptures[1];
+
+  const beforeQueryCount = await getCaptureLogCount();
+
+  const listResponse = await fetch(`${baseUrl}/api/captures`);
   const listBody = await readJson<ApiResponse<CaptureLogListItem[]>>(
     listResponse,
   );
@@ -95,14 +105,19 @@ async function main(): Promise<void> {
   assert(Array.isArray(listBody.data), "List API data is not an array.");
   assert(listBody.data.length >= 2, "List API returned fewer than two rows.");
 
-  const first = listBody.data[0];
-  const second = listBody.data[1];
+  const first = listBody.data.find((item) => item.id === latestCapture.id);
+  const second = listBody.data.find((item) => item.id === olderCapture.id);
 
-  assert(first.id > second.id, "List API is not ordered by latest capture first.");
+  assert(first, "List API missing latest created capture.");
+  assert(second, "List API missing older created capture.");
+  assert(
+    listBody.data.indexOf(first) < listBody.data.indexOf(second),
+    "List API is not ordered by latest capture first.",
+  );
   assert(first.responseStatus === 201, "List item responseStatus mismatch.");
   assert(!("requestBody" in first), "List item should not include requestBody.");
 
-  const detailResponse = await fetch(`${baseUrl}/capture-logs/${first.id}`);
+  const detailResponse = await fetch(`${baseUrl}/api/captures/${first.id}`);
   const detailBody = await readJson<ApiResponse<CaptureLogDetail>>(
     detailResponse,
   );
@@ -123,7 +138,7 @@ async function main(): Promise<void> {
     "API responseStatus does not match DB status_code.",
   );
 
-  const missingResponse = await fetch(`${baseUrl}/capture-logs/999999999`);
+  const missingResponse = await fetch(`${baseUrl}/api/captures/999999999`);
   const missingBody = await readJson<ApiResponse<null>>(missingResponse);
 
   assert(missingResponse.status === 404, "Missing ID API did not return 404.");
@@ -133,7 +148,26 @@ async function main(): Promise<void> {
     "Missing ID error code mismatch.",
   );
 
-  console.log("Capture Log API verification passed.");
+  const legacyListResponse = await fetch(`${baseUrl}/capture-logs`);
+  const legacyDetailResponse = await fetch(`${baseUrl}/capture-logs/${first.id}`);
+
+  assert(
+    legacyListResponse.status === 404,
+    "Legacy list API should return 404.",
+  );
+  assert(
+    legacyDetailResponse.status === 404,
+    "Legacy detail API should return 404.",
+  );
+
+  const afterQueryCount = await getCaptureLogCount();
+
+  assert(
+    beforeQueryCount === afterQueryCount,
+    "Query API changed capture log count.",
+  );
+
+  console.log("Capture Query API verification passed.");
   console.log(
     JSON.stringify(
       {
@@ -142,6 +176,10 @@ async function main(): Promise<void> {
         detailPath: detailBody.data.path,
         responseStatus: detailBody.data.responseStatus,
         missingStatus: missingResponse.status,
+        legacyListStatus: legacyListResponse.status,
+        legacyDetailStatus: legacyDetailResponse.status,
+        beforeQueryCount,
+        afterQueryCount,
       },
       null,
       2,

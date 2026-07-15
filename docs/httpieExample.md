@@ -1,12 +1,12 @@
 # HTTPie Examples
 
-현재 FlowTool은 STEP 8 기준으로 전역 Capture Middleware를 사용하지 않는다.
+현재 FlowTool은 STEP 9 기준으로 전역 Capture Middleware를 사용하지 않는다.
 
 따라서 아래 요청은 Capture Log를 자동 생성하지 않는다.
 
 - `GET /health`
-- `GET /capture-logs`
-- `GET /capture-logs/:id`
+- `GET /api/captures`
+- `GET /api/captures/:id`
 - `POST /api/test/echo`
 - `GET /api/test/error`
 
@@ -63,10 +63,10 @@ npm run verify:capture-logs
 
 ---
 
-## 4. Capture Log 목록 조회
+## 4. Capture Query 목록 조회
 
 ```bash
-http GET :3000/capture-logs
+http GET :3000/api/captures
 ```
 
 확인 항목:
@@ -80,12 +80,12 @@ http GET :3000/capture-logs
 
 ---
 
-## 5. Capture Log 상세 조회
+## 5. Capture Query 상세 조회
 
 목록 응답에서 확인한 `id`를 사용한다.
 
 ```bash
-http GET :3000/capture-logs/102
+http GET :3000/api/captures/102
 ```
 
 확인 항목:
@@ -101,7 +101,7 @@ http GET :3000/capture-logs/102
 ## 6. 존재하지 않는 Capture Log 조회
 
 ```bash
-http GET :3000/capture-logs/999999999
+http GET :3000/api/captures/999999999
 ```
 
 예상 결과:
@@ -123,7 +123,24 @@ HTTP Status는 `404`여야 한다.
 
 ---
 
-## 7. 테스트 API 호출
+## 7. 기존 Capture Log 조회 경로 제거 확인
+
+STEP 9부터 기존 조회 경로는 제공하지 않는다.
+
+```bash
+http GET :3000/capture-logs
+http GET :3000/capture-logs/102
+```
+
+예상 결과:
+
+```text
+HTTP Status 404
+```
+
+---
+
+## 8. 테스트 API 호출
 
 아래 API는 현재도 응답 확인용으로 사용할 수 있다.
 
@@ -152,7 +169,7 @@ http POST :3000/api/test/echo \
 
 ---
 
-## 8. 테스트 Error API 호출
+## 9. 테스트 Error API 호출
 
 ```bash
 http GET :3000/api/test/error
@@ -174,9 +191,9 @@ HTTP Status는 `500`이다.
 
 ---
 
-## 9. 내부 API 비수집 자동 검증
+## 10. 내부 API 비수집 자동 검증
 
-아래 스크립트는 `/health`, `/capture-logs`, `/capture-logs/:id`, 존재하지 않는 상세 조회를 호출한 뒤 `capture_logs` 개수가 변하지 않는지 확인한다.
+아래 스크립트는 `/health`, `/api/captures`, `/api/captures/:id`, 존재하지 않는 상세 조회, 기존 `/capture-logs` 404 경로를 호출한 뒤 `capture_logs` 개수가 변하지 않는지 확인한다.
 
 ```bash
 cd backend
@@ -196,9 +213,5 @@ No auto capture verification passed.
 아래 기능은 아직 구현 전이다.
 
 - `ANY /proxy`
-- `GET /api/captures`
-- `GET /api/captures/:id`
 - Target Application 요청 전달
 - Proxy 오류 저장
-
-`/api/captures` 경로는 STEP 9에서 추가될 예정이다.

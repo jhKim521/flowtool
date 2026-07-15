@@ -6,7 +6,7 @@ import {
 } from "../types/capture-log";
 
 export async function fetchCaptureLogs(): Promise<CaptureLogListItem[]> {
-  const response = await fetch("/capture-logs");
+  const response = await fetch("/api/captures");
 
   if (!response.ok) {
     throw new Error("Capture Log API request failed.");
@@ -24,7 +24,7 @@ export async function fetchCaptureLogs(): Promise<CaptureLogListItem[]> {
 export async function fetchCaptureLogById(
   id: string,
 ): Promise<CaptureLogDetail> {
-  const response = await fetch(`/capture-logs/${id}`);
+  const response = await fetch(`/api/captures/${id}`);
 
   if (response.status === 404) {
     throw new CaptureLogNotFoundError();

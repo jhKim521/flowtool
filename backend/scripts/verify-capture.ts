@@ -2,8 +2,8 @@ import {
   closeDatabaseConnection,
   verifyDatabaseConnection,
 } from "../src/config/database";
+import { getCaptureLogById } from "../src/services/capture-query.service";
 import {
-  getCaptureLogById,
   initializeCaptureStorage,
   saveCaptureLog,
 } from "../src/services/capture-log.service";

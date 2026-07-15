@@ -1,8 +1,6 @@
 import {
   createCaptureLog,
   countCaptureLogs,
-  findCaptureLogById,
-  findCaptureLogs,
   findLatestCaptureLog,
   initializeCaptureLogTable,
 } from "../repositories/capture-log.repository";
@@ -24,16 +22,6 @@ export async function saveCaptureLog(
 
 export async function getLatestCaptureLog(): Promise<CaptureLog | null> {
   return findLatestCaptureLog();
-}
-
-export async function getCaptureLogs(): Promise<CaptureLog[]> {
-  return findCaptureLogs();
-}
-
-export async function getCaptureLogById(
-  id: number,
-): Promise<CaptureLog | null> {
-  return findCaptureLogById(id);
 }
 
 export async function getCaptureLogCount(): Promise<number> {

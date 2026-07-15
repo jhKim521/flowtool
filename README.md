@@ -10,7 +10,7 @@
 FlowTool는 개발 중 발생하는 HTTP 요청과 응답을 수집하고 저장하여,
 개발자가 요청 흐름을 빠르게 분석할 수 있도록 돕는 개발 지원 도구입니다.
 
-현재는 MVP 단계로, HTTP Capture 기능을 중심으로 구현하고 있으며,
+현재는 MVP 단계로, Proxy 기반 HTTP Capture 구조로 전환하며 구현하고 있으며,
 향후 Spring Starter와 Node SDK를 통해 애플리케이션 내부 처리 흐름까지 추적하는 것을 목표로 하고 있습니다.
 
 ---
@@ -19,7 +19,7 @@ FlowTool는 개발 중 발생하는 HTTP 요청과 응답을 수집하고 저장
 
 FlowTool의 최종 목표는 다음과 같습니다.
 
-- HTTP 요청 및 응답 자동 수집
+- Proxy 기반 HTTP 요청 및 응답 수집
 - 요청 흐름(Trace) 추적
 - 요청/응답 데이터 조회
 - 오류 발생 원인 분석 지원
@@ -139,6 +139,8 @@ AI는 위 문서를 참고하여 구현을 진행합니다.
 - Capture 자동 검증 스크립트
 - Capture Log 목록 조회 API
 - Capture Log 단건 상세 조회 API
+- Query API 분리 (`GET /api/captures`, `GET /api/captures/:id`)
+- FlowTool 내부 API 자동 Capture 제외
 - 존재하지 않는 Capture Log 조회 시 404 처리
 - React + Vite Frontend 초기 구성
 - Capture Log 목록 화면
@@ -149,7 +151,7 @@ AI는 위 문서를 참고하여 구현을 진행합니다.
 
 진행 예정
 
-- FlowTool 내부 관리 API Capture 제외
+- Proxy Core 구현
 - Dashboard UI 개선
 - Spring Starter
 - Node SDK

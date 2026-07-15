@@ -4,20 +4,26 @@
 
 ## 현재 프로젝트 상태
 
-현재 FlowTool은 아래 기능까지 구현되어 있다.
+FlowTool은 기존 전역 Capture Middleware 중심 구조에서 Proxy 중심 구조로 전환 중이다.
+
+현재까지 아래 작업이 완료되었다.
 
 ### Backend
 
 * Express.js + TypeScript 프로젝트 구성
 * PostgreSQL 연결
-* CaptureLog 모델 및 `capture_logs` 테이블 구성
-* HTTP 요청/응답 Capture Middleware 구현
-* Capture Log 저장 기능 구현
-* Capture Log 목록 조회 API 구현
-* Capture Log 상세 조회 API 구현
-* 자동 검증 스크립트 구현
+* CaptureLog 모델 및 Repository 구성
+* Capture Log 목록 조회 기능
+* Capture Log 상세 조회 기능
+* Capture Log 저장 검증 스크립트
+* Express 전역 Capture Middleware 제거
+* 사용하지 않는 Capture Middleware 코드 삭제
+* Capture 저장 기능을 `saveCaptureLog(input)` 명시적 호출 구조로 분리
+* Capture Service 입력을 Express `Request`, `Response` 객체가 아닌 순수 데이터 입력으로 변경
+* FlowTool 내부 API 요청 자동 Capture 중단
+* 내부 API 비수집 검증 스크립트 추가
 
-현재 조회 API는 아래 경로를 사용한다.
+현재 Backend 조회 API는 아래 경로를 사용한다.
 
 ```text
 GET /capture-logs
@@ -29,79 +35,67 @@ GET /capture-logs/:id
 * React + Vite + TypeScript 프로젝트 구성
 * Capture Log 목록 화면 구현
 * Capture Log 상세 화면 구현
+* 목록에서 상세 화면 이동
 * 로딩, 빈 목록, 404, API 실패 상태 처리
-* Playwright MCP 검증 완료
+* Playwright MCP 기반 화면 검증
 
-### 아키텍처 변경
-
-FlowTool의 구조를 기존 전역 Capture Middleware 방식에서 Proxy 중심 구조로 변경하기로 결정했다.
-
-최종적으로 FlowTool은 아래 책임을 가진다.
-
-```text
-Proxy
-- Source Application 요청 수신
-- Target Application으로 요청 전달
-- Target Application 응답 수신
-- Source Application에 응답 반환
-
-Capture
-- Proxy가 실제로 중계한 요청과 응답 저장
-
-Query
-- 저장된 Capture Log 목록 및 상세 조회
-```
-
-이번 작업에서는 Proxy 기능을 구현하지 않는다.
+현재 Frontend는 기존 `/capture-logs` API를 호출한다.
 
 ---
 
 # 현재 목표
 
-기존 Express 전역 Capture Middleware 구조를 제거하고, Capture Log 저장 기능을 명시적으로 호출할 수 있는 Capture Service 구조로 분리한다.
+기존 Capture 목록·상세 조회 기능을 Query 전용 API로 분리한다.
 
-현재는 FlowTool Backend에 들어오는 모든 요청이 Capture Middleware를 통과하므로 아래 요청도 Capture Log로 저장된다.
-
-```text
-GET /health
-GET /capture-logs
-GET /capture-logs/:id
-Frontend 조회 요청
-```
-
-이번 작업 이후에는 FlowTool 내부 관리 및 조회 요청이 자동으로 Capture Log에 저장되지 않아야 한다.
-
-Capture 저장은 이후 Proxy Service가 요청·응답 데이터를 전달했을 때만 명시적으로 수행할 수 있는 구조여야 한다.
-
----
-
-# Sprint Goal
-
-이번 작업에서는 아래 구조 전환만 완료한다.
+Backend Query API 경로를 아래와 같이 변경한다.
 
 ```text
 기존
 
-Express 전역 요청
-    ↓
-Capture Middleware
-    ↓
-Capture Log 자동 저장
+GET /capture-logs
+GET /capture-logs/:id
 ```
 
 ```text
 변경
 
-Proxy Service
-    ↓ 명시적 저장 요청
-Capture Service
-    ↓
+GET /api/captures
+GET /api/captures/:id
+```
+
+Frontend 목록 및 상세 화면도 변경된 Query API를 사용하도록 수정한다.
+
+이번 작업 이후 Query API는 Capture Log를 읽기만 하며, 어떤 Capture Log도 생성하지 않아야 한다.
+
+---
+
+# Sprint Goal
+
+이번 작업에서는 아래 조회 흐름만 완성한다.
+
+```text
+React Dashboard
+      ↓
+GET /api/captures
+GET /api/captures/:id
+      ↓
+Query Controller
+      ↓
+Query Service
+      ↓
 CaptureLog Repository
-    ↓
+      ↓
 PostgreSQL
 ```
 
-현재는 Proxy Service가 아직 없으므로, Capture Service를 독립된 저장 책임으로 구성하고 검증 코드에서 직접 호출하여 저장 기능을 확인한다.
+Query 요청은 Capture 저장 흐름과 완전히 분리한다.
+
+```text
+Query API
+→ 조회만 수행
+→ Capture Service 호출 금지
+→ Capture Log 생성 금지
+```
 
 ---
 
@@ -109,146 +103,281 @@ PostgreSQL
 
 이번 작업에서는 아래 항목만 구현한다.
 
-* Express 애플리케이션의 전역 Capture Middleware 적용 제거
-* 기존 Capture 저장 로직 분석
-* Capture Log 저장 기능을 독립적인 Capture Service로 정리
-* Capture Service가 저장에 필요한 데이터를 명시적으로 전달받도록 수정
-* Capture Service와 CaptureLog Repository의 책임 정리
-* FlowTool 내부 API 요청 자동 저장 중단
-* Capture Service 직접 호출 기반 저장 검증 추가 또는 기존 검증 스크립트 수정
-* 기존 Query API 정상 동작 확인
-* 기존 Frontend 목록·상세 화면 회귀 검증
-* PostgreSQL MCP 저장 결과 검증
+* 기존 Capture 조회 Route를 Query API 경로로 변경
+* Query Controller 책임 정리
+* Query Service 책임 정리
+* 기존 Repository 조회 기능 재사용
+* Frontend 목록 API 호출 경로 변경
+* Frontend 상세 API 호출 경로 변경
+* Frontend 개발용 Vite Proxy 설정 확인 및 수정
+* Backend Query API 검증 스크립트 수정
+* Query API 호출 전후 DB 개수 비교 검증
+* Frontend 목록·상세 화면 회귀 검증
+* 기존 404 및 API 실패 처리 회귀 검증
+* 관련 API 명세 및 진행 문서 반영
 
 ---
 
-# Capture Service 책임
+# Query API
 
-Capture Service는 Proxy가 전달한 요청과 응답 정보를 하나의 Capture Log로 저장하는 내부 서비스다.
+## Capture 목록 조회
 
-Capture Service는 Express의 `Request`, `Response` 객체에 직접 의존하지 않는다.
+### Endpoint
 
-아래와 같은 순수 데이터 객체를 전달받아야 한다.
-
-```ts
-interface CreateCaptureInput {
-  sourceService?: string | null;
-  targetUrl?: string | null;
-  method: string;
-  path: string;
-  query?: unknown;
-  requestHeaders?: unknown;
-  requestBody?: unknown;
-  responseHeaders?: unknown;
-  responseBody?: unknown;
-  responseStatus?: number | null;
-  durationMs: number;
-  errorMessage?: string | null;
-}
+```http
+GET /api/captures
 ```
 
-현재 DB 모델에 아직 존재하지 않는 필드는 이번 작업에서 무리하게 추가하지 않아도 된다.
+### 역할
 
-`sourceService`, `targetUrl`, `responseHeaders` 등 Proxy 전용 필드 추가가 스키마 변경을 요구한다면 다음 Proxy 데이터 모델 반영 단계로 미룬다.
+* 저장된 Capture Log 목록 조회
+* 현재 구현된 최신순 정렬 유지
+* 현재 목록 응답 형식 유지
+* Capture Log 저장 기능 호출 금지
 
-이번 작업의 핵심은 아래와 같다.
+### 응답 항목
 
-> Express 요청 객체에서 자동 수집하여 저장하는 구조를 제거하고, 명시적인 입력값을 받아 저장하는 구조로 전환한다.
+현재 구현된 목록 응답 항목을 유지한다.
 
----
+* id
+* method
+* path
+* responseStatus
+* durationMs
+* createdAt
 
-# Capture Service가 해야 하는 일
-
-* 저장 입력값 수신
-* CaptureLog 모델 또는 Repository 입력 형식으로 변환
-* CaptureLog Repository 호출
-* 저장 결과 반환
-* 필요한 최소한의 저장 예외 처리
-
----
-
-# Capture Service가 하지 않는 일
-
-* Target Application으로 HTTP 요청 전달
-* Target URL 검증
-* HTTP Method별 Proxy 처리
-* 목록 조회
-* 상세 조회
-* Frontend 응답 생성
-* Express `Request`, `Response` 객체 직접 처리
-* Query API 호출 자동 Capture
+현재 데이터 모델에 없는 Proxy 전용 필드는 추가하지 않는다.
 
 ---
 
-# 전역 Capture Middleware 처리 원칙
+## Capture 상세 조회
 
-현재 `app.ts` 또는 관련 설정에서 아래와 유사하게 등록된 전역 Middleware를 확인한다.
+### Endpoint
 
-```ts
-app.use(captureMiddleware);
+```http
+GET /api/captures/:id
 ```
 
-전역 적용을 제거한다.
+### 역할
 
-Capture Middleware가 더 이상 사용되지 않는다면 이번 작업에서 삭제할 수 있다.
+* Capture Log 한 건 조회
+* 존재하지 않는 ID의 404 처리
+* 현재 상세 응답 형식 유지
+* Capture Log 저장 기능 호출 금지
 
-다만 삭제 전 아래를 확인한다.
+### 응답 항목
 
-* 저장 로직 중 Capture Service에서 재사용해야 하는 코드가 있는지
-* Response Body 수집 관련 유틸리티가 이후 Proxy 구현에 활용 가능한지
-* 타입 또는 테스트 코드에서 참조하고 있는지
+현재 구현된 상세 응답 항목을 유지한다.
 
-사용되지 않는 코드를 단순히 `legacy`, `deprecated`, 주석 처리 상태로 남기지 않는다.
+* id
+* method
+* path
+* query
+* requestHeaders
+* requestBody
+* responseStatus
+* responseBody
+* durationMs
+* errorMessage
+* createdAt
 
-필요한 로직은 Capture Service 또는 적절한 유틸리티로 이동하고, 불필요한 코드는 제거한다.
-
-Git 이력을 통해 기존 구현을 확인할 수 있으므로 사용되지 않는 코드를 보존할 필요는 없다.
+현재 DB와 API에 이미 존재하는 필드만 반환한다.
 
 ---
 
-# 기존 Query 기능 유지
+# 기존 API 처리 원칙
 
-이번 작업에서는 기존 Query API 경로를 변경하지 않는다.
-
-아래 API는 현재와 동일하게 유지한다.
+기존 API는 아래와 같다.
 
 ```text
 GET /capture-logs
 GET /capture-logs/:id
 ```
 
-Query API를 아래 경로로 변경하는 작업은 STEP 9에서 수행한다.
+현재 프로젝트는 외부 사용자가 없는 로컬 MVP 단계이므로, 기존 API를 호환 목적으로 유지하지 않는다.
 
-```text
-GET /api/captures
-GET /api/captures/:id
-```
+아래 원칙을 따른다.
 
-이번 작업에서는 기존 목록 및 상세 조회 기능이 깨지지 않는지만 검증한다.
+* 기존 `/capture-logs` Route 제거
+* 기존 `/capture-logs/:id` Route 제거
+* 신규 `/api/captures` Route만 유지
+* 동일 기능을 두 경로에서 중복 제공하지 않음
+* Deprecated Route를 주석이나 별도 파일로 남기지 않음
+
+기존 경로를 호출하면 `404`가 반환되는 것이 정상이다.
 
 ---
 
-# 저장 검증 방식
+# Backend 책임 분리
 
-기존 검증 스크립트가 테스트 API 요청을 발생시킨 뒤 Capture Middleware가 자동 저장하는 방식이라면 현재 아키텍처와 맞지 않는다.
+## Query Controller
 
-검증 스크립트를 아래 방식으로 변경한다.
+해야 하는 일
+
+* HTTP 요청 Parameter 수신
+* Query Service 호출
+* 공통 응답 형식 반환
+* 존재하지 않는 ID에 대한 오류 전달
+
+하지 않는 일
+
+* Repository 직접 접근
+* Capture Log 저장
+* Capture Service 호출
+* DB 데이터 가공 로직 직접 구현
+* Proxy 요청 처리
+
+---
+
+## Query Service
+
+해야 하는 일
+
+* Capture Log 목록 조회
+* Capture Log 단건 조회
+* 존재하지 않는 Capture Log 오류 처리
+* 필요한 최소 응답 변환
+
+하지 않는 일
+
+* Capture Log 저장
+* Target URL 검증
+* HTTP 요청 중계
+* Express `Request`, `Response` 객체 처리
+* Frontend 전용 표시 형식 생성
+
+---
+
+## CaptureLog Repository
+
+기존 조회 기능을 재사용한다.
+
+필요한 기능
+
+* 최신순 목록 조회
+* ID 단건 조회
+* 검증을 위한 전체 개수 조회
+
+이번 작업을 위해 Repository를 불필요하게 분리하지 않는다.
+
+---
+
+# 파일 및 명명 원칙
+
+현재 파일명이 `capture-log.controller.ts`, `capture-log.routes.ts`, `capture-log.service.ts` 등으로 구성되어 있을 수 있다.
+
+이번 작업에서는 역할이 혼동되지 않도록 Query 관련 이름을 명확히 정리할 수 있다.
+
+권장 예시
 
 ```text
-Capture Service 직접 호출
-    ↓
-Capture Log 저장
-    ↓
-Repository 또는 Query API 조회
-    ↓
-저장 결과 비교
+routes/
+└── capture-query.routes.ts
+
+controllers/
+└── capture-query.controller.ts
+
+services/
+├── capture-log.service.ts
+└── capture-query.service.ts
 ```
 
-검증 스크립트에서 HTTP 요청을 통해 저장해야 한다면 테스트 전용 API를 새로 만들지 않는다.
+단, 현재 `capture-log.service.ts`가 저장과 조회 기능을 모두 포함하고 있다면 아래 책임으로 정리한다.
 
-이번 단계에서는 Capture Service를 호출하는 Backend 내부 검증 스크립트를 우선한다.
+```text
+CaptureLogService
+→ 명시적 Capture 저장
 
-테스트 전용 API 추가는 MVP 범위 확장이므로 금지한다.
+CaptureQueryService
+→ 목록 및 상세 조회
+```
+
+파일명 변경으로 과도한 수정이 발생한다면 최소 변경을 우선하되, 하나의 Service에 저장과 조회 책임을 다시 합치지 않는다.
+
+---
+
+# Frontend 변경
+
+Frontend 목록 및 상세 화면의 API 호출 경로를 변경한다.
+
+```text
+목록
+
+기존: GET /capture-logs
+변경: GET /api/captures
+```
+
+```text
+상세
+
+기존: GET /capture-logs/:id
+변경: GET /api/captures/:id
+```
+
+Frontend 화면 URL은 변경하지 않는다.
+
+```text
+목록 화면: 현재 경로 유지
+상세 화면: /capture/:id 유지
+```
+
+화면 URL과 Backend API URL을 혼동하지 않는다.
+
+---
+
+# Vite Proxy 설정
+
+Frontend에서 상대 경로로 API를 호출하는 경우 Vite Proxy가 신규 API 경로를 Backend로 전달할 수 있어야 한다.
+
+예시:
+
+```ts
+server: {
+  proxy: {
+    "/api": {
+      target: "http://localhost:3000",
+      changeOrigin: true
+    }
+  }
+}
+```
+
+기존 `/capture-logs` 전용 Proxy 설정이 있다면 제거하거나 `/api` 기준으로 변경한다.
+
+`/capture/:id`는 React Router 화면 경로이므로 Backend로 Proxy하지 않는다.
+
+---
+
+# 공통 응답 형식
+
+현재 프로젝트의 공통 응답 형식을 유지한다.
+
+## 성공
+
+```json
+{
+  "success": true,
+  "data": {},
+  "failResponse": null
+}
+```
+
+## 실패
+
+```json
+{
+  "success": false,
+  "data": null,
+  "failResponse": {
+    "code": "CAPTURE_NOT_FOUND",
+    "message": "Capture log not found."
+  }
+}
+```
+
+목록 응답의 `data`가 현재 배열 형태라면 해당 형식을 유지한다.
+
+이번 작업에서 페이지네이션 응답 구조로 변경하지 않는다.
 
 ---
 
@@ -256,42 +385,49 @@ Repository 또는 Query API 조회
 
 아래 조건을 모두 만족하면 이번 작업은 완료로 판단한다.
 
-## 구조
+## Backend
 
-* Express 전역 Capture Middleware 적용이 제거된다.
-* Capture Log 저장 기능이 독립적인 Capture Service로 구성된다.
-* Capture Service가 Express `Request`, `Response` 객체에 직접 의존하지 않는다.
-* Capture Service가 명시적인 입력값으로 Capture Log를 저장한다.
-* Capture Service와 Query Service의 책임이 구분된다.
-* 사용되지 않는 Capture Middleware 코드가 정리된다.
+* `GET /api/captures`가 정상 동작한다.
+* `GET /api/captures/:id`가 정상 동작한다.
+* 목록은 기존과 동일하게 최신순으로 조회된다.
+* 존재하지 않는 ID는 `404`와 `CAPTURE_NOT_FOUND`를 반환한다.
+* 기존 `/capture-logs` 경로는 제거된다.
+* 기존 `/capture-logs/:id` 경로는 제거된다.
+* Query Controller와 Query Service의 책임이 분리된다.
+* Query API에서 Capture Service를 호출하지 않는다.
+* Query API 호출로 Capture Log가 생성되지 않는다.
+* Health Check 호출로 Capture Log가 생성되지 않는다.
 
-## 동작
+## Frontend
 
-* Capture Service 직접 호출 시 Capture Log가 PostgreSQL에 저장된다.
-* 저장된 데이터가 기존 Query API에서 조회된다.
-* `GET /health` 호출로 Capture Log가 추가되지 않는다.
-* `GET /capture-logs` 호출로 Capture Log가 추가되지 않는다.
-* `GET /capture-logs/:id` 호출로 Capture Log가 추가되지 않는다.
-* Frontend 목록 화면 새로고침으로 Capture Log가 추가되지 않는다.
-* Frontend 상세 화면 접근으로 Capture Log가 추가되지 않는다.
-* 기존 목록 조회 API가 정상 동작한다.
-* 기존 상세 조회 API가 정상 동작한다.
-* 존재하지 않는 ID의 404 처리가 정상 동작한다.
+* 목록 화면이 `GET /api/captures`를 호출한다.
+* 상세 화면이 `GET /api/captures/:id`를 호출한다.
+* 기존 목록 데이터가 정상 표시된다.
+* 기존 상세 데이터가 정상 표시된다.
+* 목록에서 상세 화면 이동이 정상 동작한다.
+* 상세 화면 새로고침이 정상 동작한다.
+* 존재하지 않는 ID의 404 화면이 정상 동작한다.
+* Backend 중단 시 API 실패 화면이 정상 동작한다.
+* Browser Console Error가 없다.
 
-## 품질
+## 검증
 
-* `npm run build` 성공
-* `npx tsc --noEmit` 성공
-* 관련 검증 스크립트 성공
-* Deprecated 설정 경고 없음
+* Backend Build 성공
+* Backend TypeScript 검사 성공
+* Frontend Build 성공
+* Frontend TypeScript 검사 성공
+* Query API 자동 검증 성공
+* Query API 호출 전후 DB 개수가 동일함
+* Playwright MCP 회귀 검증 성공
+* PostgreSQL MCP 비수집 검증 성공
 * IDE Problems 기준 Error 없음
-* 불필요한 코드 및 import 없음
+* Deprecated 설정 경고 없음
 
 ---
 
 # 검증 방법
 
-## 1. Backend Build 및 TypeScript 검증
+## 1. Backend Build 및 TypeScript 검사
 
 ```bash
 cd backend
@@ -301,105 +437,167 @@ npx tsc --noEmit
 
 ---
 
-## 2. Capture 저장 검증
+## 2. Query API 검증
 
-Capture Service를 직접 호출하는 검증 스크립트를 실행한다.
-
-기존 스크립트를 수정했다면 실제 명령을 작업 결과에 명시한다.
-
-예시:
+Backend 서버를 실행한다.
 
 ```bash
-npm run verify:capture-storage
+npm run dev
 ```
 
-검증 항목:
-
-* 저장 전 Capture Log 개수 확인
-* Capture Service 직접 호출
-* 저장 후 Capture Log 개수가 정확히 1건 증가
-* 입력한 Method, Path, Body, Status, Duration이 DB 값과 일치
-* Query API에서 저장된 데이터 조회 가능
-
----
-
-## 3. 내부 API 비수집 검증
-
-아래 API를 각각 호출한다.
+목록 조회:
 
 ```bash
-http GET :3000/health
+http GET :3000/api/captures
+```
+
+상세 조회:
+
+```bash
+http GET :3000/api/captures/{existingId}
+```
+
+존재하지 않는 ID:
+
+```bash
+http GET :3000/api/captures/999999999
+```
+
+기존 경로 제거 확인:
+
+```bash
 http GET :3000/capture-logs
 http GET :3000/capture-logs/{existingId}
 ```
 
-호출 전후 `capture_logs` 개수를 비교한다.
-
-아래 조건을 만족해야 한다.
+예상 결과:
 
 ```text
-호출 전 개수 = 호출 후 개수
+/api/captures             → 200
+/api/captures/{id}        → 200
+/api/captures/999999999   → 404
+/capture-logs             → 404
+/capture-logs/{id}        → 404
 ```
-
-PostgreSQL MCP를 이용해 실제 DB 결과를 확인한다.
 
 ---
 
-## 4. Frontend 회귀 검증
+## 3. 자동 검증 스크립트
 
-Backend 실행:
+기존 `verify:capture-logs` 스크립트를 신규 Query API 기준으로 수정한다.
+
+최소 검증 항목:
+
+* 목록 조회 성공
+* 상세 조회 성공
+* 최신순 정렬 확인
+* 없는 ID 404 확인
+* 기존 경로 404 확인
+* API 응답과 DB 데이터 비교
+* 조회 전후 Capture Log 개수 동일
+
+실제 실행 명령과 결과를 작업 보고에 포함한다.
+
+예시:
+
+```bash
+npm run verify:capture-logs
+```
+
+별도 비수집 검증 스크립트가 존재한다면 함께 실행한다.
+
+```bash
+npm run verify:no-auto-capture
+```
+
+---
+
+## 4. PostgreSQL MCP 검증
+
+Query API 호출 전 `capture_logs` 개수를 확인한다.
+
+아래 요청을 여러 번 호출한다.
+
+```text
+GET /health
+GET /api/captures
+GET /api/captures/:id
+```
+
+호출 후 다시 개수를 확인한다.
+
+완료 조건:
+
+```text
+호출 전 Capture Log 개수
+=
+호출 후 Capture Log 개수
+```
+
+Query API 응답과 PostgreSQL 데이터가 일치하는지도 확인한다.
+
+---
+
+## 5. Frontend Build 및 TypeScript 검사
+
+```bash
+cd frontend
+npm run build
+npx tsc --noEmit
+```
+
+Lint 명령이 정의되어 있다면 함께 실행한다.
+
+---
+
+## 6. 브라우저 회귀 검증
+
+Backend와 Frontend를 실행한다.
+
+Backend:
 
 ```bash
 cd backend
 npm run dev
 ```
 
-Frontend 실행:
+Frontend:
 
 ```bash
 cd frontend
 npm run dev
 ```
 
-브라우저에서 아래를 확인한다.
+Playwright MCP 또는 브라우저에서 아래를 확인한다.
 
-* 목록 화면 정상 표시
-* 목록 새로고침 정상 동작
-* 상세 화면 정상 이동
-* 상세 화면 새로고침 정상 동작
-* 404 상태 정상 처리
-* Console Error 없음
-* 화면 접근 전후 Capture Log 개수 변화 없음
-
-필요한 경우 Playwright MCP를 사용한다.
-
----
-
-## 5. PostgreSQL MCP 검증
-
-아래 내용을 검증한다.
-
-* Capture Service가 저장한 데이터 존재
-* 저장 데이터가 입력값과 일치
-* Health Check 호출로 데이터가 추가되지 않음
-* Query API 호출로 데이터가 추가되지 않음
-* Frontend 목록 및 상세 조회로 데이터가 추가되지 않음
+* 목록 화면 렌더링
+* Network에서 `GET /api/captures` 응답 `200`
+* 목록 데이터 표시
+* 상세 화면 이동
+* Network에서 `GET /api/captures/:id` 응답 `200`
+* 상세 데이터 표시
+* 상세 화면 새로고침
+* 존재하지 않는 ID의 404 화면
+* Backend 중단 시 API 실패 화면
+* 정상 흐름에서 Console Error 없음
+* 목록 및 상세 접근 전후 DB 개수 증가 없음
 
 ---
 
 # 작업 완료 후 문서 반영
 
-반드시 아래 문서를 업데이트한다.
+반드시 아래 문서를 확인하고 필요한 부분을 업데이트한다.
 
+* `L2_api_spec.md`
 * `L4_progress.md`
-* 필요한 경우 `handoff.md`
-* 검증 명령이 변경되었다면 관련 테스트 문서
+* API 경로를 참조하는 테스트 문서
+* API 경로를 참조하는 검증 스크립트
 
 `L4_progress.md`에는 아래 상태를 반영한다.
 
 ```text
-STEP 8 Capture 저장 책임 분리 → 완료
-STEP 9 Query API 분리 → 진행 예정
+STEP 9 Query API 분리 → 완료
+STEP 10 Proxy Core 구현 → 진행 예정
 ```
 
 ---
@@ -411,8 +609,8 @@ STEP 9 Query API 분리 → 진행 예정
 * Notion Development History 업데이트
 * `L4_progress.md` 업데이트
 * `JournalGuide.md` 기준 Journal 작성
-* `EndTask.md` 기준 Git 변경사항 확인
-* Conventional Commit 메시지 선정
+* `EndTask.md` 기준 Git 변경사항 검토
+* 적절한 Conventional Commit 메시지 선정
 * Git Commit
 * Git Push
 * 작업 결과 보고
@@ -424,34 +622,38 @@ STEP 9 Query API 분리 → 진행 예정
 이번 작업에서는 아래 기능을 구현하지 않는다.
 
 * Proxy API
-* Target Application으로 HTTP 요청 전달
+* Target Application 요청 전달
 * Target Application 응답 수신
 * Target URL Header 처리
 * Proxy Timeout
 * `502 Bad Gateway`
 * `504 Gateway Timeout`
-* Query API 경로 변경
-* Frontend API 경로 변경
-* DB 스키마 확장
+* CaptureLog DB 스키마 변경
 * `sourceService` 필드 추가
 * `targetUrl` 필드 추가
 * `responseHeaders` 필드 추가
-* Spring 연동
-* Node 연동
-* Target Service 매핑
+* Capture 저장 방식 변경
+* Frontend 화면 URL 변경
+* UI 디자인 수정
 * 검색
 * 필터
 * 페이징
-* UI 디자인 변경
+* 정렬 기능 추가
+* 요청 재실행
+* Spring 연동
+* Node 연동
+* Target Service 매핑
 * AI 기능
 
 ---
 
 # 다음 작업
 
-이번 작업이 완료되면 다음 작업으로 아래 항목 하나만 진행한다.
+이번 작업 완료 후 다음 작업으로 아래 항목 하나만 진행한다.
 
-> 기존 Capture 목록·상세 조회 기능을 Query 전용 API인 `GET /api/captures`, `GET /api/captures/:id`로 분리하고 Frontend 호출 경로를 변경한다.
+> `POST /proxy`를 통해 Source Application의 요청을 Target Application으로 전달하고, Target 응답을 Source Application에 반환하는 Proxy Core를 구현한다.
+
+다음 작업에서는 Proxy Core 정상 흐름만 구현하고, Connection refused 및 Timeout 등 상세 오류 처리는 별도 단계로 분리한다.
 
 ---
 
@@ -469,7 +671,6 @@ STEP 9 Query API 분리 → 진행 예정
 * `L2_entity_model.md`
 * `L2_api_spec.md`
 * `L3_test_strategy.md`
-* `handoff.md`
 * `L4_progress.md`
 
-현재는 기존 전역 Capture Middleware를 제거하고 Capture 저장 책임을 독립시키는 작업에만 집중한다.
+현재는 기존 Capture 조회 기능을 Query 전용 API로 분리하고 Frontend 호출 경로를 변경하는 작업에만 집중한다.

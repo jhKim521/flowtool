@@ -9,7 +9,7 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     server: {
       proxy: {
-        "/capture-logs": {
+        "/api": {
           target: apiBaseUrl,
           changeOrigin: true,
         },

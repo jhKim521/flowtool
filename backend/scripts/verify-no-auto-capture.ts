@@ -47,14 +47,20 @@ async function main(): Promise<void> {
   const baseUrl = `http://127.0.0.1:${address.port}`;
 
   await assertCountUnchanged("Health API", () => fetch(`${baseUrl}/health`));
-  await assertCountUnchanged("Capture list API", () =>
+  await assertCountUnchanged("Capture Query list API", () =>
+    fetch(`${baseUrl}/api/captures`),
+  );
+  await assertCountUnchanged("Capture Query detail API", () =>
+    fetch(`${baseUrl}/api/captures/${existingCapture.id}`),
+  );
+  await assertCountUnchanged("Capture Query missing detail API", () =>
+    fetch(`${baseUrl}/api/captures/999999999`),
+  );
+  await assertCountUnchanged("Legacy Capture list API", () =>
     fetch(`${baseUrl}/capture-logs`),
   );
-  await assertCountUnchanged("Capture detail API", () =>
+  await assertCountUnchanged("Legacy Capture detail API", () =>
     fetch(`${baseUrl}/capture-logs/${existingCapture.id}`),
-  );
-  await assertCountUnchanged("Capture missing detail API", () =>
-    fetch(`${baseUrl}/capture-logs/999999999`),
   );
 
   console.log("No auto capture verification passed.");
