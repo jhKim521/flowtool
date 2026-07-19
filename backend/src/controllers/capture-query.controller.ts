@@ -9,6 +9,8 @@ import { CaptureLog } from "../types/capture-log";
 function toListItem(captureLog: CaptureLog) {
   return {
     id: captureLog.id,
+    sourceService: captureLog.sourceService,
+    targetUrl: captureLog.targetUrl,
     method: captureLog.method,
     path: captureLog.path,
     responseStatus: captureLog.statusCode,
@@ -23,6 +25,7 @@ function toDetail(captureLog: CaptureLog) {
     query: captureLog.query,
     requestHeaders: captureLog.requestHeaders,
     requestBody: captureLog.requestBody,
+    responseHeaders: captureLog.responseHeaders,
     responseBody: captureLog.responseBody,
     errorMessage: captureLog.errorMessage,
   };

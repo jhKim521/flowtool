@@ -1,6 +1,6 @@
 # HTTPie Examples
 
-현재 FlowTool은 STEP 9 기준으로 전역 Capture Middleware를 사용하지 않는다.
+현재 FlowTool은 STEP 10 기준으로 전역 Capture Middleware를 사용하지 않는다.
 
 따라서 아래 요청은 Capture Log를 자동 생성하지 않는다.
 
@@ -10,7 +10,7 @@
 - `POST /api/test/echo`
 - `GET /api/test/error`
 
-Capture Log 저장은 현재 Backend 내부 검증 스크립트가 `Capture Service`를 직접 호출하는 방식으로 확인한다.
+Capture Log 저장은 `POST /proxy` 요청을 통해 Target Application으로 실제 중계된 요청과 응답만 대상으로 한다.
 
 ---
 
@@ -43,22 +43,50 @@ http GET :3000/health
 
 ---
 
-## 3. Capture Log 테스트 데이터 준비
+## 3. Proxy 요청으로 Capture Log 생성
 
-현재 단계에서는 HTTPie 요청으로 Capture Log를 직접 생성하지 않는다.
+테스트 Target으로 Backend의 Echo API를 사용한다.
 
-테스트 데이터가 필요하면 Backend 검증 스크립트를 실행한다.
+```bash
+http POST :3000/proxy source==manual \
+  X-FlowTool-Target-Url:http://localhost:3000/api/test/echo \
+  X-FlowTool-Source-Service:manual-httpie \
+  X-Source-Request:manual-001 \
+  message="hello from proxy"
+```
+
+예상 결과:
+
+```json
+{
+  "received": {
+    "message": "hello from proxy"
+  },
+  "query": {
+    "source": "manual"
+  }
+}
+```
+
+확인 항목:
+
+- HTTP Status가 `201`인지
+- 응답 Header에 `X-FlowTool-Capture-Id`가 포함되는지
+- 응답 Body가 Target API 응답과 같은지
+- Capture Log가 정확히 1건 생성되는지
+
+자동 검증이 필요하면 아래 스크립트를 실행한다.
+
+```bash
+cd backend
+npm run verify:proxy-core
+```
+
+기존 Capture Service 직접 저장 검증은 아래 명령으로 수행할 수 있다.
 
 ```bash
 cd backend
 npm run verify:capture
-```
-
-또는 목록/상세 조회용 데이터를 함께 준비한다.
-
-```bash
-cd backend
-npm run verify:capture-logs
 ```
 
 ---
@@ -74,6 +102,7 @@ http GET :3000/api/captures
 - `success`가 `true`인지
 - `data`가 배열인지
 - 최신 Capture Log가 먼저 표시되는지
+- 목록 항목에 `sourceService`, `targetUrl`이 포함되는지
 - 목록 항목에 `requestBody`, `responseBody`가 포함되지 않는지
 
 이 요청은 Capture Log를 생성하지 않아야 한다.
@@ -92,7 +121,7 @@ http GET :3000/api/captures/102
 
 - `success`가 `true`인지
 - `data.id`가 요청한 ID와 같은지
-- `query`, `requestHeaders`, `requestBody`, `responseBody`, `errorMessage`가 표시되는지
+- `sourceService`, `targetUrl`, `query`, `requestHeaders`, `requestBody`, `responseHeaders`, `responseBody`, `errorMessage`가 표시되는지
 
 이 요청은 Capture Log를 생성하지 않아야 한다.
 
@@ -212,6 +241,7 @@ No auto capture verification passed.
 
 아래 기능은 아직 구현 전이다.
 
-- `ANY /proxy`
-- Target Application 요청 전달
 - Proxy 오류 저장
+- Retry
+- Timeout 정책
+- Streaming 응답

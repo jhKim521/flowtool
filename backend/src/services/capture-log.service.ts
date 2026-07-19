@@ -32,6 +32,8 @@ function toCreateCaptureLogInput(
   input: CreateCaptureInput,
 ): CreateCaptureLogInput {
   return {
+    sourceService: input.sourceService ?? null,
+    targetUrl: input.targetUrl ?? null,
     method: input.method,
     path: input.path,
     query: input.query ?? {},

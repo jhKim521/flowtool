@@ -1,5 +1,7 @@
 export interface CaptureLogListItem {
   id: number;
+  sourceService: string | null;
+  targetUrl: string | null;
   method: string;
   path: string;
   responseStatus: number;
@@ -11,6 +13,7 @@ export interface CaptureLogDetail extends CaptureLogListItem {
   query: Record<string, unknown>;
   requestHeaders: Record<string, unknown>;
   requestBody: unknown;
+  responseHeaders: Record<string, unknown>;
   responseBody: unknown;
   errorMessage: string | null;
 }

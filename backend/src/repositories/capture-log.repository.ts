@@ -1,10 +1,15 @@
 import { pool } from "../config/database";
-import { createCaptureLogsTableSql } from "../models/capture-log.model";
+import {
+  alterCaptureLogsTableSql,
+  createCaptureLogsTableSql,
+} from "../models/capture-log.model";
 import { CaptureLog, CreateCaptureLogInput } from "../types/capture-log";
 
 function toCaptureLog(row: Record<string, unknown>): CaptureLog {
   return {
     id: Number(row.id),
+    sourceService: row.source_service ? String(row.source_service) : null,
+    targetUrl: row.target_url ? String(row.target_url) : null,
     method: String(row.method),
     path: String(row.path),
     query: row.query as Record<string, unknown>,
@@ -21,6 +26,7 @@ function toCaptureLog(row: Record<string, unknown>): CaptureLog {
 
 export async function initializeCaptureLogTable(): Promise<void> {
   await pool.query(createCaptureLogsTableSql);
+  await pool.query(alterCaptureLogsTableSql);
 }
 
 export async function createCaptureLog(
@@ -29,6 +35,8 @@ export async function createCaptureLog(
   const result = await pool.query(
     `
       INSERT INTO capture_logs (
+        source_service,
+        target_url,
         method,
         path,
         query,
@@ -40,10 +48,12 @@ export async function createCaptureLog(
         duration_ms,
         error_message
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
       RETURNING *
     `,
     [
+      input.sourceService,
+      input.targetUrl,
       input.method,
       input.path,
       JSON.stringify(input.query),

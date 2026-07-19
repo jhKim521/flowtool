@@ -141,6 +141,10 @@ AI는 위 문서를 참고하여 구현을 진행합니다.
 - Capture Log 단건 상세 조회 API
 - Query API 분리 (`GET /api/captures`, `GET /api/captures/:id`)
 - FlowTool 내부 API 자동 Capture 제외
+- Proxy Core 구현 (`ANY /proxy`)
+- Target Application 요청/응답 중계
+- Proxy 요청 및 응답 Capture Log 저장
+- Proxy 전용 데이터 모델 일부 반영 (`sourceService`, `targetUrl`, `responseHeaders`)
 - 존재하지 않는 Capture Log 조회 시 404 처리
 - React + Vite Frontend 초기 구성
 - Capture Log 목록 화면
@@ -151,7 +155,8 @@ AI는 위 문서를 참고하여 구현을 진행합니다.
 
 진행 예정
 
-- Proxy Core 구현
+- Proxy 오류 처리
+- Proxy 데이터 모델 화면 반영
 - Dashboard UI 개선
 - Spring Starter
 - Node SDK
@@ -180,6 +185,8 @@ Backend 검증
 ```bash
 npm run verify:capture
 npm run verify:capture-logs
+npm run verify:no-auto-capture
+npm run verify:proxy-core
 ```
 
 Frontend 검증

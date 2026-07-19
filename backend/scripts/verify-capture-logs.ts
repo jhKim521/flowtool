@@ -21,6 +21,8 @@ interface ApiResponse<T> {
 
 interface CaptureLogListItem {
   id: number;
+  sourceService: string | null;
+  targetUrl: string | null;
   method: string;
   path: string;
   responseStatus: number;
@@ -32,6 +34,7 @@ interface CaptureLogDetail extends CaptureLogListItem {
   query: Record<string, unknown>;
   requestHeaders: Record<string, unknown>;
   requestBody: unknown;
+  responseHeaders: Record<string, unknown>;
   responseBody: unknown;
   errorMessage: string | null;
 }
@@ -66,6 +69,8 @@ async function main(): Promise<void> {
   for (const message of ["capture list one", "capture list two"]) {
     const createdCapture = await saveCaptureLog({
       method: "POST",
+      sourceService: "verify-query-source",
+      targetUrl: "http://127.0.0.1/verify/api/captures",
       path: "/verify/api/captures",
       query: {},
       requestHeaders: {
@@ -115,6 +120,14 @@ async function main(): Promise<void> {
     "List API is not ordered by latest capture first.",
   );
   assert(first.responseStatus === 201, "List item responseStatus mismatch.");
+  assert(
+    first.sourceService === "verify-query-source",
+    "List item sourceService mismatch.",
+  );
+  assert(
+    first.targetUrl === "http://127.0.0.1/verify/api/captures",
+    "List item targetUrl mismatch.",
+  );
   assert(!("requestBody" in first), "List item should not include requestBody.");
 
   const detailResponse = await fetch(`${baseUrl}/api/captures/${first.id}`);
@@ -126,6 +139,10 @@ async function main(): Promise<void> {
   assert(detailBody.success, "Detail API success flag is false.");
   assert(detailBody.data.id === first.id, "Detail API id mismatch.");
   assert("requestBody" in detailBody.data, "Detail API missing requestBody.");
+  assert(
+    "responseHeaders" in detailBody.data,
+    "Detail API missing responseHeaders.",
+  );
   assert("responseBody" in detailBody.data, "Detail API missing responseBody.");
 
   const dbCaptureLog = await getCaptureLogById(first.id);

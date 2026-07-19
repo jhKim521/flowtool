@@ -1,5 +1,7 @@
 export interface CaptureLog {
   id: number;
+  sourceService: string | null;
+  targetUrl: string | null;
   method: string;
   path: string;
   query: Record<string, unknown>;
@@ -14,6 +16,8 @@ export interface CaptureLog {
 }
 
 export interface CreateCaptureInput {
+  sourceService?: string | null;
+  targetUrl?: string | null;
   method: string;
   path: string;
   query?: unknown;
@@ -27,6 +31,8 @@ export interface CreateCaptureInput {
 }
 
 export interface CreateCaptureLogInput {
+  sourceService: string | null;
+  targetUrl: string | null;
   method: string;
   path: string;
   query: unknown;
